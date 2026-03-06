@@ -1,0 +1,8 @@
+.pocket-piece-wrapper piece {
+  width: 45px;
+  height: 45px;
+  display: block;
+  background-size: cover;
+  /* Resetting absolute positioning used inside the board */
+  position: relative !important;
+}
