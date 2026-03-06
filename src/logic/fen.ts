@@ -1,10 +1,21 @@
-import { parseFen } from 'chessops/fen';
+import { makeFen, parseFen } from 'chessops/fen';
+
+export type PocketRole = 'p' | 'n' | 'b' | 'r' | 'q';
+export type PocketCounts = Record<PocketRole, number>;
+
+interface PocketMaterialSide {
+  pawn: number;
+  knight: number;
+  bishop: number;
+  rook: number;
+  queen: number;
+}
 
 export interface GameState {
   fen: string;
   pockets: {
-    white: Record<string, number>;
-    black: Record<string, number>;
+    white: PocketCounts;
+    black: PocketCounts;
   };
   turn: 'white' | 'black';
 }
@@ -12,24 +23,21 @@ export interface GameState {
 export const parseCrazyhouseFen = (fen: string): GameState => {
   const setup = parseFen(fen).unwrap();
 
-  // Chessops pockets are [white, black]
-  // We access roles by name: pawn, knight, bishop, rook, queen
-  const getPocket = (index: number) => {
-    const p = setup.pockets?.[index];
+  const getPocket = (side: PocketMaterialSide | undefined): PocketCounts => {
     return {
-      p: p?.pawn || 0,
-      n: p?.knight || 0,
-      b: p?.bishop || 0,
-      r: p?.rook || 0,
-      q: p?.queen || 0,
+      p: side?.pawn ?? 0,
+      n: side?.knight ?? 0,
+      b: side?.bishop ?? 0,
+      r: side?.rook ?? 0,
+      q: side?.queen ?? 0,
     };
   };
 
   return {
-    fen,
+    fen: makeFen(setup),
     pockets: {
-      white: getPocket(0),
-      black: getPocket(1),
+      white: getPocket(setup.pockets?.white),
+      black: getPocket(setup.pockets?.black),
     },
     turn: setup.turn === 'white' ? 'white' : 'black',
   };

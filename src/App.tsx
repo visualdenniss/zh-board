@@ -9,18 +9,24 @@ import './App.css';
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1';
 
 function App() {
-  const { fen, setFen, gameState, makeMove } = useCrazyhouse(START_FEN);
+  const { fen, setFen, boardFen, gameState, legalDests, makeMove, makeDrop } =
+    useCrazyhouse(START_FEN);
   const [cgApi, setCgApi] = useState<Api | null>(null);
 
   return (
     <div className="layout">
-      <div className="game-container">
-        {/* Black Pocket on top */}
+      <div className="analysis-shell">
+        <Board
+          fen={boardFen}
+          turn={gameState.turn}
+          legalDests={legalDests}
+          onMove={makeMove}
+          onDrop={makeDrop}
+          onInit={setCgApi}
+        />
+
         <Pocket color="black" pieces={gameState.pockets.black} cgApi={cgApi} />
-
-        <Board fen={fen} onMove={makeMove} onInit={(api) => setCgApi(api)} />
-
-        {/* White Pocket on bottom */}
+        <div className="pocket-spacer" />
         <Pocket color="white" pieces={gameState.pockets.white} cgApi={cgApi} />
       </div>
 

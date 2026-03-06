@@ -1,8 +1,196 @@
+:root {
+  --surface-0: #0f0f0f;
+  --surface-1: #202020;
+  --surface-2: #2a2a2a;
+  --surface-3: #3a3a3a;
+  --text-0: #d7d7d7;
+  --text-1: #9f9f9f;
+  --board-size: min(74vw, 430px);
+  --pocket-width: min(34vw, 420px);
+}
+
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--surface-0);
+  color: var(--text-0);
+}
+
+.analysis-shell {
+  display: grid;
+  grid-template-columns: var(--board-size) var(--pocket-width);
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.board {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  width: var(--board-size);
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.pocket {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 74px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-3) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--surface-3) 70%, #999 30%);
+}
+
+.pocket.black {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.pocket.white {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.pocket-spacer {
+  grid-column: 2;
+  grid-row: 2;
+  border-radius: 12px;
+  background: #0b0b0b;
+  border: 1px solid #222;
+}
+
+.pocket-piece-wrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pocket-piece-wrapper:active {
+  cursor: grabbing;
+}
+
+.pocket-cg-wrap {
+  width: 48px;
+  height: 48px;
+  position: relative;
+}
+
 .pocket-piece-wrapper piece {
-  width: 45px;
-  height: 45px;
+  width: 100% !important;
+  height: 100% !important;
   display: block;
-  background-size: cover;
-  /* Resetting absolute positioning used inside the board */
   position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  background-size: contain !important;
+  opacity: 1 !important;
+}
+
+.pocket-piece-wrapper .count {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #111;
+  background: #d6d6d6;
+  border: 1px solid #111;
+}
+
+.fen-container {
+  width: min(
+    calc(var(--board-size) + var(--pocket-width) + 16px),
+    calc(100vw - 32px)
+  );
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fen-label {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+
+.fen-input {
+  width: 100%;
+  min-width: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  color: var(--text-0);
+  padding: 12px 14px;
+  font-size: 24px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.fen-input:focus {
+  outline: 2px solid #666;
+  outline-offset: 0;
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --board-size: min(94vw, 640px);
+    --pocket-width: var(--board-size);
+  }
+
+  .analysis-shell {
+    grid-template-columns: var(--board-size);
+    grid-template-rows: auto auto auto;
+  }
+
+  .pocket.black {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .board {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .pocket-spacer {
+    display: none;
+  }
+
+  .pocket.white {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .fen-container {
+    width: min(var(--board-size), calc(100vw - 32px));
+  }
+
+  .fen-label {
+    font-size: 22px;
+  }
+
+  .fen-input {
+    font-size: 16px;
+  }
 }

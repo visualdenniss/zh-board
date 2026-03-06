@@ -1,92 +1,10 @@
-.layout {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  background: #161512; /* Lichess dark theme */
-  color: #bababa;
-  min-height: 100vh;
-  padding: 20px;
+* {
+  box-sizing: border-box;
 }
 
-.game-container {
-  display: flex;
-  flex-direction: column; /* Vertical stack: Black Pocket -> Board -> White Pocket */
-  align-items: center;
-  gap: 10px;
-}
-
-.pocket {
-  display: flex;
-  gap: 5px;
-  background: #262421;
-  padding: 5px 15px;
-  border-radius: 3px;
-  min-height: 50px;
-  width: 600px; /* Matches board width */
-}
-
-.pocket-piece {
-  position: relative;
-  cursor: pointer;
-  width: 45px;
-  height: 45px;
-}
-
-.pocket-piece img {
-  width: 100%;
-}
-
-.pocket-piece .count {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  background: #7f7f7f;
-  color: white;
-  font-size: 11px;
-  padding: 1px 4px;
-  border-radius: 10px;
-  line-height: 1;
-}
-
-.fen-input {
-  width: 600px;
-  background: #262421;
-  border: 1px solid #403d39;
-  color: #bababa;
-  padding: 8px;
-  font-family: monospace;
-}
-
-.pocket-piece-wrapper {
-  position: relative;
-  width: 50px;
-  height: 50px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Force the piece to fill the wrapper */
-.pocket-piece-wrapper .piece {
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  position: relative !important; /* Overriding chessground default absolute */
-}
-
-.pocket-piece-wrapper .count {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  background: #d5d5d5;
-  color: #161512;
-  font-weight: bold;
-  font-size: 12px;
-  padding: 1px 4px;
-  border-radius: 10px;
-  z-index: 10;
-  line-height: 1;
-  border: 1px solid #161512;
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
 }

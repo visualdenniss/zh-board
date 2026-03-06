@@ -1,29 +1,35 @@
+import { createElement } from 'react';
+import type { MouseEvent } from 'react';
 import type { Api } from 'chessground/api';
-import type { Role } from 'chessops/types';
+import type { Role } from 'chessground/types';
+import type { PocketCounts, PocketRole } from '../logic/fen';
 
 interface PocketProps {
-  pieces: Record<string, number>;
+  pieces: PocketCounts;
   color: 'white' | 'black';
   cgApi: Api | null;
 }
 
-export const Pocket = ({ pieces, color, cgApi }: PocketProps) => {
-  // Map our single-letter keys to Chessground roles
-  const roleMap: Record<string, string> = {
-    p: 'pawn',
-    n: 'knight',
-    b: 'bishop',
-    r: 'rook',
-    q: 'queen',
-  };
+const POCKET_ROLES: PocketRole[] = ['p', 'n', 'b', 'r', 'q'];
+const roleMap: Record<PocketRole, Role> = {
+  p: 'pawn',
+  n: 'knight',
+  b: 'bishop',
+  r: 'rook',
+  q: 'queen',
+};
 
-  const handleMouseDown = (roleChar: string, e: React.MouseEvent) => {
+export const Pocket = ({ pieces, color, cgApi }: PocketProps) => {
+  const handleMouseDown = (roleChar: PocketRole, e: MouseEvent) => {
     if (!cgApi || pieces[roleChar] <= 0) return;
+
+    const role = roleMap[roleChar];
+    if (!role) return;
 
     cgApi.dragNewPiece(
       {
-        role: roleMap[roleChar] as Role,
-        color: color,
+        role,
+        color,
       },
       e.nativeEvent,
     );
@@ -31,23 +37,25 @@ export const Pocket = ({ pieces, color, cgApi }: PocketProps) => {
 
   return (
     <div className={`pocket ${color}`}>
-      {Object.entries(pieces).map(
-        ([roleChar, count]) =>
-          count > 0 && (
-            <div
-              key={roleChar}
-              className="pocket-piece-wrapper"
-              onMouseDown={(e) => handleMouseDown(roleChar, e)}
-            >
-              {/* This div mimics Chessground's internal structure. 
-                The CSS classes 'piece', 'pawn', 'white' etc. 
-                will trigger the background-images from your imported CSS.
-            */}
-              <div className={`piece ${roleMap[roleChar]} ${color}`} />
-              <span className="count">{count}</span>
+      {POCKET_ROLES.map((roleChar) => {
+        const count = pieces[roleChar];
+        if (count <= 0) return null;
+
+        return (
+          <div
+            key={roleChar}
+            className="pocket-piece-wrapper"
+            onMouseDown={(e) => handleMouseDown(roleChar, e)}
+          >
+            <div className="cg-wrap pocket-cg-wrap" aria-hidden>
+              {createElement('piece', {
+                className: `${roleMap[roleChar]} ${color}`,
+              })}
             </div>
-          ),
-      )}
+            <span className="count">{count}</span>
+          </div>
+        );
+      })}
     </div>
   );
 };

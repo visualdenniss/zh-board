@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Chessground } from 'chessground';
 import type { Api } from 'chessground/api';
+import type { Key, Role } from 'chessground/types';
 
 import 'chessground/assets/chessground.base.css';
 import 'chessground/assets/chessground.brown.css';
@@ -8,43 +9,66 @@ import 'chessground/assets/chessground.cburnett.css';
 
 interface BoardProps {
   fen: string;
+  turn: 'white' | 'black';
+  legalDests: Map<Key, Key[]>;
   onMove: (orig: string, dest: string) => void;
+  onDrop: (role: Role, dest: string) => void;
   onInit?: (api: Api) => void;
 }
 
-export const Board = ({ fen, onMove, onInit }: BoardProps) => {
+export const Board = ({ fen, turn, legalDests, onMove, onDrop, onInit }: BoardProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const apiRef = useRef<Api | null>(null);
+  const moveHandlerRef = useRef(onMove);
+  const dropHandlerRef = useRef(onDrop);
+  const initHandlerRef = useRef(onInit);
+
+  useEffect(() => {
+    moveHandlerRef.current = onMove;
+  }, [onMove]);
+
+  useEffect(() => {
+    dropHandlerRef.current = onDrop;
+  }, [onDrop]);
+
+  useEffect(() => {
+    initHandlerRef.current = onInit;
+  }, [onInit]);
 
   useEffect(() => {
     if (ref.current && !apiRef.current) {
       apiRef.current = Chessground(ref.current, {
-        fen: fen,
         movable: {
-          free: true,
-          color: 'both',
-          events: { after: onMove },
+          events: {
+            after: (orig, dest) => moveHandlerRef.current(orig, dest),
+            afterNewPiece: (role, dest) => dropHandlerRef.current(role, dest),
+          },
         },
-        // Adds the "hand" cursor when hovering pieces
         highlight: {
           lastMove: true,
           check: true,
         },
       });
-      if (onInit) onInit(apiRef.current);
+      if (initHandlerRef.current) initHandlerRef.current(apiRef.current);
     }
-  }, [onInit, onMove]); // Added missing dependencies
+
+    return () => {
+      apiRef.current?.destroy();
+      apiRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
-    // We use set({ fen }) to update the board state visually
-    apiRef.current?.set({ fen });
-  }, [fen]);
+    apiRef.current?.set({
+      fen,
+      turnColor: turn,
+      movable: {
+        free: false,
+        color: turn,
+        dests: legalDests,
+      },
+    });
+  }, [fen, legalDests, turn]);
 
-  return (
-    <div
-      ref={ref}
-      className="cg-wrap"
-      style={{ width: '300px', height: '300px' }}
-    />
-  );
+  return <div ref={ref} className="board cg-wrap" />;
 };
