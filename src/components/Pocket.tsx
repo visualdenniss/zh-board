@@ -8,6 +8,7 @@ interface PocketProps {
   pieces: PocketCounts;
   color: 'white' | 'black';
   cgApi: Api | null;
+  disabled?: boolean;
 }
 
 const POCKET_ROLES: PocketRole[] = ['p', 'n', 'b', 'r', 'q'];
@@ -19,9 +20,11 @@ const roleMap: Record<PocketRole, Role> = {
   q: 'queen',
 };
 
-export const Pocket = ({ pieces, color, cgApi }: PocketProps) => {
+export const Pocket = ({ pieces, color, cgApi, disabled = false }: PocketProps) => {
   const handleMouseDown = (roleChar: PocketRole, e: MouseEvent) => {
-    if (!cgApi || pieces[roleChar] <= 0) return;
+    if (disabled || !cgApi || pieces[roleChar] <= 0) return;
+
+    e.preventDefault();
 
     const role = roleMap[roleChar];
     if (!role) return;
@@ -36,7 +39,7 @@ export const Pocket = ({ pieces, color, cgApi }: PocketProps) => {
   };
 
   return (
-    <div className={`pocket ${color}`}>
+    <div className={`pocket ${color}${disabled ? ' disabled' : ''}`}>
       {POCKET_ROLES.map((roleChar) => {
         const count = pieces[roleChar];
         if (count <= 0) return null;

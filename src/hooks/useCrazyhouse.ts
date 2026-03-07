@@ -16,8 +16,22 @@ const parsePosition = (fen: string): Crazyhouse | undefined => {
   }
 };
 
+const getPosition = (fen: string, fallbackFen: string): Crazyhouse | undefined => {
+  return parsePosition(fen) ?? parsePosition(fallbackFen);
+};
+
+export type PromotionRole = Extract<Role, 'queen' | 'rook' | 'bishop' | 'knight'>;
+
+export interface PendingPromotion {
+  orig: string;
+  dest: string;
+  color: 'white' | 'black';
+}
+
 export const useCrazyhouse = (initialFen: string) => {
-  const [fen, setFen] = useState(initialFen);
+  const [fen, setFenState] = useState(initialFen);
+  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
+  const [boardSyncKey, setBoardSyncKey] = useState(0);
 
   const fallbackFen = useMemo(() => {
     const initialPos = parsePosition(initialFen);
@@ -25,7 +39,7 @@ export const useCrazyhouse = (initialFen: string) => {
   }, [initialFen]);
 
   const position = useMemo(() => {
-    return parsePosition(fen) ?? parsePosition(fallbackFen)!;
+    return getPosition(fen, fallbackFen) ?? parsePosition(fallbackFen)!;
   }, [fen, fallbackFen]);
 
   const boardFen = useMemo(() => makeFen(position.toSetup()), [position]);
@@ -38,38 +52,108 @@ export const useCrazyhouse = (initialFen: string) => {
     return chessgroundDests(position) as Map<Key, Key[]>;
   }, [position]);
 
+  const syncBoard = useCallback(() => {
+    setBoardSyncKey((value) => value + 1);
+  }, []);
+
+  const setFen = useCallback((nextFen: string) => {
+    setPendingPromotion(null);
+    setFenState(nextFen);
+  }, []);
+
   const applyLegalMove = useCallback(
-    (currentFen: string, move: Move): string => {
-      const currentPos = parsePosition(currentFen) ?? parsePosition(fallbackFen);
-      if (!currentPos) return currentFen;
-      if (!currentPos.isLegal(move)) return currentFen;
+    (move: Move): boolean => {
+      const currentPos = getPosition(fen, fallbackFen);
+      if (!currentPos || !currentPos.isLegal(move)) {
+        syncBoard();
+        return false;
+      }
 
       currentPos.play(move);
-      return makeFen(currentPos.toSetup());
+      setFenState(makeFen(currentPos.toSetup()));
+      return true;
     },
-    [fallbackFen],
+    [fen, fallbackFen, syncBoard],
   );
 
   const makeMove = useCallback(
     (orig: string, dest: string) => {
+      if (pendingPromotion) return;
+
       const from = parseSquare(orig);
       const to = parseSquare(dest);
       if (from === undefined || to === undefined) return;
 
-      setFen((currentFen) => applyLegalMove(currentFen, { from, to }));
+      const piece = position.board.get(from);
+      if (!piece || piece.color !== position.turn) {
+        syncBoard();
+        return;
+      }
+
+      const promotionRank = piece.color === 'white' ? '8' : '1';
+      const isPromotion = piece.role === 'pawn' && dest[1] === promotionRank;
+      if (isPromotion) {
+        setPendingPromotion({
+          orig,
+          dest,
+          color: piece.color,
+        });
+        return;
+      }
+
+      applyLegalMove({ from, to });
     },
-    [applyLegalMove],
+    [applyLegalMove, pendingPromotion, position, syncBoard],
   );
 
   const makeDrop = useCallback(
     (role: Role, dest: string) => {
+      if (pendingPromotion) return;
+
       const to = parseSquare(dest);
       if (to === undefined) return;
 
-      setFen((currentFen) => applyLegalMove(currentFen, { role, to }));
+      applyLegalMove({ role, to });
     },
-    [applyLegalMove],
+    [applyLegalMove, pendingPromotion],
   );
 
-  return { fen, setFen, boardFen, gameState, legalDests, makeMove, makeDrop };
+  const confirmPromotion = useCallback(
+    (promotion: PromotionRole) => {
+      if (!pendingPromotion) return;
+
+      const from = parseSquare(pendingPromotion.orig);
+      const to = parseSquare(pendingPromotion.dest);
+      setPendingPromotion(null);
+
+      if (from === undefined || to === undefined) {
+        syncBoard();
+        return;
+      }
+
+      applyLegalMove({ from, to, promotion });
+    },
+    [applyLegalMove, pendingPromotion, syncBoard],
+  );
+
+  const cancelPromotion = useCallback(() => {
+    if (!pendingPromotion) return;
+
+    setPendingPromotion(null);
+    syncBoard();
+  }, [pendingPromotion, syncBoard]);
+
+  return {
+    fen,
+    setFen,
+    boardFen,
+    boardSyncKey,
+    gameState,
+    legalDests,
+    pendingPromotion,
+    makeMove,
+    makeDrop,
+    confirmPromotion,
+    cancelPromotion,
+  };
 };
