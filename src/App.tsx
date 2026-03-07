@@ -9,9 +9,21 @@ import './App.css';
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1';
 
 function App() {
-  const { fen, setFen, boardFen, gameState, legalDests, makeMove, makeDrop } =
-    useCrazyhouse(START_FEN);
+  const {
+    fen,
+    setFen,
+    boardFen,
+    boardSyncKey,
+    gameState,
+    legalDests,
+    pendingPromotion,
+    makeMove,
+    makeDrop,
+    confirmPromotion,
+    cancelPromotion,
+  } = useCrazyhouse(START_FEN);
   const [cgApi, setCgApi] = useState<Api | null>(null);
+  const interactionLocked = pendingPromotion !== null;
 
   return (
     <div className="layout">
@@ -22,12 +34,27 @@ function App() {
           legalDests={legalDests}
           onMove={makeMove}
           onDrop={makeDrop}
+          pendingPromotion={pendingPromotion}
+          interactionLocked={interactionLocked}
+          boardSyncKey={boardSyncKey}
+          onConfirmPromotion={confirmPromotion}
+          onCancelPromotion={cancelPromotion}
           onInit={setCgApi}
         />
 
-        <Pocket color="black" pieces={gameState.pockets.black} cgApi={cgApi} />
+        <Pocket
+          color="black"
+          pieces={gameState.pockets.black}
+          cgApi={cgApi}
+          disabled={interactionLocked}
+        />
         <div className="pocket-spacer" />
-        <Pocket color="white" pieces={gameState.pockets.white} cgApi={cgApi} />
+        <Pocket
+          color="white"
+          pieces={gameState.pockets.white}
+          cgApi={cgApi}
+          disabled={interactionLocked}
+        />
       </div>
 
       <FenInput fen={fen} onChange={setFen} />
