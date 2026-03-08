@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { Key } from 'chessground/types';
 import { chessgroundDests } from 'chessops/compat';
 import { parseFen, makeFen } from 'chessops/fen';
+import { makeUci } from 'chessops'; // Add this import
 import { Crazyhouse } from 'chessops/variant';
 import { parseSquare } from 'chessops';
 import type { Role, Move } from 'chessops/types';
@@ -16,11 +17,17 @@ const parsePosition = (fen: string): Crazyhouse | undefined => {
   }
 };
 
-const getPosition = (fen: string, fallbackFen: string): Crazyhouse | undefined => {
+const getPosition = (
+  fen: string,
+  fallbackFen: string,
+): Crazyhouse | undefined => {
   return parsePosition(fen) ?? parsePosition(fallbackFen);
 };
 
-export type PromotionRole = Extract<Role, 'queen' | 'rook' | 'bishop' | 'knight'>;
+export type PromotionRole = Extract<
+  Role,
+  'queen' | 'rook' | 'bishop' | 'knight'
+>;
 
 export interface PendingPromotion {
   orig: string;
@@ -30,7 +37,8 @@ export interface PendingPromotion {
 
 export const useCrazyhouse = (initialFen: string) => {
   const [fen, setFenState] = useState(initialFen);
-  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
+  const [pendingPromotion, setPendingPromotion] =
+    useState<PendingPromotion | null>(null);
   const [boardSyncKey, setBoardSyncKey] = useState(0);
 
   const fallbackFen = useMemo(() => {
@@ -68,6 +76,9 @@ export const useCrazyhouse = (initialFen: string) => {
         syncBoard();
         return false;
       }
+      // Convert the move object to a UCI string (e.g., "e2e4" or "P@e4")
+      const uci = makeUci(move);
+      console.log('Move Played (UCI):', uci);
 
       currentPos.play(move);
       setFenState(makeFen(currentPos.toSetup()));
